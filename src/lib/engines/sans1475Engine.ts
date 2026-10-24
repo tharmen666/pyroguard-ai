@@ -1,4 +1,4 @@
-import type {
+import {
   ExtinguisherAsset,
   FleetAuditSummary,
   CommercialQuoteItem,
@@ -19,36 +19,30 @@ export const STATUTORY_CURRENT_YEAR = 2026;
 export function calculateHydrostaticTestDueYear(
   cylinderType: ExtinguisherAsset['cylinderType'],
   manufactureYear: number,
-  lastServiceYear: number = STATUTORY_CURRENT_YEAR
+  lastPressureTestYear?: number
 ): number {
   const cycle = cylinderType === 'CO2' ? 5 : 10;
-  const elapsed = Math.max(0, lastServiceYear - manufactureYear);
+  const baseline = (lastPressureTestYear && lastPressureTestYear >= manufactureYear)
+    ? lastPressureTestYear
+    : manufactureYear;
 
-  if (elapsed === 0) {
-    return manufactureYear + cycle;
-  }
-
-  if (elapsed % cycle === 0) {
-    // Current year is the exact anniversary year
-    return manufactureYear + elapsed;
-  }
-
-  // Next upcoming statutory anniversary
-  return manufactureYear + Math.ceil(elapsed / cycle) * cycle;
+  return baseline + cycle;
 }
 
 export function evaluateExtinguisherCompliance(
-  asset: Omit<ExtinguisherAsset, 'hydrostaticTestDueYear' | 'condemned' | 'condemnationReason' | 'serviceActionRequired'>,
+  asset: Omit<ExtinguisherAsset, 'hydrostaticTestDueYear' | 'isPressureTestOverdue' | 'condemned' | 'condemnationReason' | 'serviceActionRequired'>,
   currentYear: number = STATUTORY_CURRENT_YEAR
 ): ExtinguisherAsset {
-  const hydroDueYear = calculateHydrostaticTestDueYear(asset.cylinderType, asset.manufactureYear, currentYear);
+  const hydroDueYear = calculateHydrostaticTestDueYear(asset.cylinderType, asset.manufactureYear, asset.lastPressureTestYear);
+  const isPressureTestOverdue = currentYear > hydroDueYear;
+  const isPressureTestDue = currentYear >= hydroDueYear;
   const age = currentYear - asset.manufactureYear;
 
   let condemned = false;
   let condemnationReason: string | undefined = undefined;
   let serviceActionRequired: ExtinguisherAsset['serviceActionRequired'] = 'None';
 
-  // 1. Mandatory condemnation checks under SANS 1475-1 (clause reference to verify)
+  // 1. Mandatory Condemnation Checks under SANS 1475-1 Clause 6
   if (asset.physicalCondition === 'DentedCorroded') {
     condemned = true;
     condemnationReason = 'SANS 1475 Condemned: Structural shell denting/corrosion compromises pressure vessel integrity.';
@@ -62,9 +56,14 @@ export function evaluateExtinguisherCompliance(
     condemned = true;
     condemnationReason = `SANS 1475 Condemned: Cylinder age (${age} years) exceeds statutory 20-year service life envelope.`;
     serviceActionRequired = 'Condemn_Replace';
-  } else if (currentYear >= hydroDueYear) {
-    // 2. Hydrostatic Pressure Testing Due
-    serviceActionRequired = 'Hydro_Test_Workshop';
+  } else if (isPressureTestDue) {
+    // 2. Hydrostatic Pressure Testing Due or Overdue
+    if (isPressureTestOverdue) {
+      serviceActionRequired = 'PRESSURE_TEST_OVERDUE';
+      condemnationReason = `SANS 1475 Statutory Overdue: Hydrostatic test expired in ${hydroDueYear} (${currentYear - hydroDueYear}y overdue). Immediate workshop testing required.`;
+    } else {
+      serviceActionRequired = 'Hydro_Test_Workshop';
+    }
   } else if (asset.gaugePressureStatus === 'Undercharged' || asset.gaugePressureStatus === 'Overcharged') {
     // 3. Pressure Failure -> Mandatory discharge and recharge
     serviceActionRequired = 'Recharge';
@@ -82,6 +81,7 @@ export function evaluateExtinguisherCompliance(
   return {
     ...asset,
     hydrostaticTestDueYear: hydroDueYear,
+    isPressureTestOverdue,
     condemned,
     condemnationReason,
     serviceActionRequired,
@@ -95,12 +95,16 @@ export function summarizeFleet(
   let passedUnits = 0;
   let routineServiceRequired = 0;
   let hydroTestWorkshopRequired = 0;
+  let hydroTestOverdueCount = 0;
   let condemnedUnits = 0;
   let rechargeRequired = 0;
 
   for (const ext of extinguishers) {
     if (ext.condemned) {
       condemnedUnits++;
+    } else if (ext.serviceActionRequired === 'PRESSURE_TEST_OVERDUE' || ext.isPressureTestOverdue) {
+      hydroTestWorkshopRequired++;
+      hydroTestOverdueCount++;
     } else if (ext.serviceActionRequired === 'Hydro_Test_Workshop') {
       hydroTestWorkshopRequired++;
     } else if (ext.serviceActionRequired === 'Recharge') {
@@ -114,17 +118,23 @@ export function summarizeFleet(
 
   const hoseReelsPassed = hoseReels.filter(hr => hr.passed && !hr.runOutObstructed).length;
   const hoseReelsDefective = hoseReels.length - hoseReelsPassed;
+  const fullComplianceClearance =
+    condemnedUnits === 0 &&
+    hydroTestOverdueCount === 0 &&
+    hoseReelsDefective === 0;
 
   return {
     totalInspected: extinguishers.length,
     passedUnits,
     routineServiceRequired,
     hydroTestWorkshopRequired,
+    hydroTestOverdueCount,
     condemnedUnits,
     rechargeRequired,
     totalHoseReels: hoseReels.length,
     hoseReelsPassed,
     hoseReelsDefective,
+    fullComplianceClearance,
   };
 }
 
@@ -185,9 +195,12 @@ export function generateDynamicCommercialQuote(
 
   // 2. Hydrostatic Workshop Pressure Testing
   if (summary.hydroTestWorkshopRequired > 0) {
+    const overdueLabel = summary.hydroTestOverdueCount > 0
+      ? ` (includes ${summary.hydroTestOverdueCount} statutory overdue unit${summary.hydroTestOverdueCount > 1 ? 's' : ''})`
+      : '';
     items.push({
       sku: 'SRV-HYDRO-TEST',
-      description: 'Mandatory Workshop Hydrostatic Pressure Test & Stretch Verification (5/10 Year Statutory Cycle)',
+      description: `Mandatory Workshop Hydrostatic Pressure Test & Stretch Verification (5/10 Year Statutory Cycle)${overdueLabel}`,
       quantity: summary.hydroTestWorkshopRequired,
       unitPrice: catalog.HYDRO_TEST_WORKSHOP,
       currency: catalog.currency,

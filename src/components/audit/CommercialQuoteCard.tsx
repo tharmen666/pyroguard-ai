@@ -58,7 +58,7 @@ export const CommercialQuoteCard: React.FC<CommercialQuoteCardProps> = ({
               </span>
             </div>
             <h2 className="text-lg font-black text-white tracking-wide">
-              Corrective Works & Replacement Quote
+              Live Compliance Up-Sell & Condemnation Quote
             </h2>
           </div>
         </div>
@@ -98,7 +98,13 @@ export const CommercialQuoteCard: React.FC<CommercialQuoteCardProps> = ({
           <div className="text-xl font-mono font-black text-amber-300 mt-1">
             {fleetSummary.hydroTestWorkshopRequired}
           </div>
-          <div className="text-[10px] text-amber-400/80 font-mono mt-0.5">5/10 Yr Cycle</div>
+          <div className="text-[10px] text-amber-400/80 font-mono mt-0.5">
+            {fleetSummary.hydroTestOverdueCount > 0 ? (
+              <span className="text-rose-400 font-bold">{fleetSummary.hydroTestOverdueCount} Overdue</span>
+            ) : (
+              '5/10 Yr Cycle'
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-3">

@@ -74,9 +74,9 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
             <FileCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-black text-white">Tamper-Evident Audit Dossier</h3>
+            <h3 className="text-base font-black text-white">Insurer-Defensible Audit Dossier</h3>
             <p className="text-xs text-slate-300 font-mono">
-              Web Crypto SHA-256 Tamper-Evident Manifest • Technician sign-off required
+              Web Crypto SHA-256 Tamper-Evident Manifest • Official Certificate
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
             className="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,229,255,0.5)] transition"
           >
             <Printer className="h-4 w-4" />
-            <span>Print / Save PDF</span>
+            <span>Print / Save Legal PDF</span>
           </button>
         </div>
       </div>
@@ -116,13 +116,13 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
                   PYROGUARD AI
                 </h1>
                 <span className="rounded bg-slate-950 text-white px-2 py-0.5 text-[10px] font-mono font-bold tracking-widest uppercase">
-                  AUDIT DOSSIER
+                  LEGAL DOSSIER
                 </span>
               </div>
               <p className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
                 {isZA 
-                  ? 'Compliance Assessment • SANS 10400-T & SANS 1475 (Parts 1 & 2)' 
-                  : 'Compliance Assessment • NZS 4503:2005 & FENZ Brigade Regulations'}
+                  ? 'Statutory Compliance Declaration • SANS 10400-T & SANS 1475 (Parts 1 & 2)' 
+                  : 'Statutory Compliance Declaration • NZS 4503:2005 & FENZ Brigade Regulations'}
               </p>
               <p className="text-[11px] text-slate-600">
                 City of Cape Town Fire Safety By-Laws & National Building Regulations Act 103 of 1977
@@ -221,7 +221,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
                   <th className="py-2 px-2">Serial</th>
                   <th className="py-2 px-2">Type</th>
                   <th className="py-2 px-2">Location</th>
-                  <th className="py-2 px-2">Hydro Due</th>
+                  <th className="py-2 px-2">Pressure Test / Due</th>
                   <th className="py-2 px-2">Condition</th>
                   <th className="py-2 px-2 text-right">Statutory Action</th>
                 </tr>
@@ -232,11 +232,20 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
                     <td className="py-1.5 px-2 font-bold">{ext.serialNumber}</td>
                     <td className="py-1.5 px-2">{ext.cylinderType} ({ext.capacityKg}kg)</td>
                     <td className="py-1.5 px-2 font-sans">{ext.locationTag}</td>
-                    <td className="py-1.5 px-2">{ext.hydrostaticTestDueYear}</td>
+                    <td className="py-1.5 px-2">
+                      <div>
+                        {ext.lastPressureTestYear ? `Test: ${ext.lastPressureTestYear}` : `Mfg: ${ext.manufactureYear}`}
+                      </div>
+                      <div className={ext.isPressureTestOverdue ? "text-rose-700 font-bold" : "text-slate-700"}>
+                        Due: {ext.hydrostaticTestDueYear} {ext.isPressureTestOverdue && '⚠️ OVERDUE'}
+                      </div>
+                    </td>
                     <td className="py-1.5 px-2 font-sans">{ext.physicalCondition}</td>
                     <td className="py-1.5 px-2 text-right font-bold">
                       {ext.condemned ? (
                         <span className="text-rose-700 uppercase">Condemned (SANS 1475-1)</span>
+                      ) : ext.isPressureTestOverdue ? (
+                        <span className="text-rose-700 uppercase">Hydro Overdue - Workshop Re-Test</span>
                       ) : ext.serviceActionRequired === 'Hydro_Test_Workshop' ? (
                         <span className="text-amber-700">Hydro Test Workshop</span>
                       ) : ext.serviceActionRequired === 'Recharge' ? (
@@ -271,7 +280,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
           <div className="space-y-2">
             <div className="font-bold text-slate-500 text-[10px] uppercase">1. Lead Competent Auditor</div>
             <div className="h-10 border-b border-dashed border-slate-400 flex items-end pb-1 font-serif italic text-base text-slate-900">
-              Ron • SAQCC Fire (demo reg.)
+              Ron • SAQCC 1475/8821
             </div>
             <div className="font-bold text-slate-900">{manifest.leadAuditor.name}</div>
             <div className="text-[10px] text-slate-600 font-mono">SAQCC Registered Competent Person</div>

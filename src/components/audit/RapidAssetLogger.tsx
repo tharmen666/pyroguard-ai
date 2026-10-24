@@ -33,6 +33,7 @@ interface RapidAssetLoggerProps {
   onRemoveAsset: (id: string) => void;
   onLoadPresetFleet: () => void;
   onVoiceCondemned?: () => void;
+  onVoiceHydroOverdue?: () => void;
 }
 
 export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
@@ -42,6 +43,7 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
   onRemoveAsset,
   onLoadPresetFleet,
   onVoiceCondemned,
+  onVoiceHydroOverdue,
 }) => {
   const currentYear = 2026;
 
@@ -51,11 +53,14 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
   const [cylinderType, setCylinderType] = useState<CylinderType>('DCP');
   const [capacityKg, setCapacityKg] = useState<number>(9.0);
   const [manufactureYear, setManufactureYear] = useState<number>(currentYear - 4);
+  const [lastPressureTestYear, setLastPressureTestYear] = useState<string>('');
   const [gaugePressureStatus, setGaugePressureStatus] = useState<GaugePressureStatus>('Normal');
   const [physicalCondition, setPhysicalCondition] = useState<PhysicalCondition>('Pass');
 
   const handleCreateAsset = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const testYearNum = lastPressureTestYear.trim() ? Number(lastPressureTestYear) : undefined;
 
     const evaluated = evaluateExtinguisherCompliance({
       id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -64,6 +69,7 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
       cylinderType,
       capacityKg,
       manufactureYear: Number(manufactureYear) || currentYear,
+      lastPressureTestYear: testYearNum,
       lastServiceDate: `${currentYear - 1}-10-15`,
       gaugePressureStatus,
       physicalCondition,
@@ -71,13 +77,16 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
 
     onAddAsset(evaluated);
 
-    // If unit was condemned, trigger voice alert
+    // If unit was condemned or hydro overdue, trigger voice alert
     if (evaluated.condemned && onVoiceCondemned) {
       onVoiceCondemned();
+    } else if (evaluated.isPressureTestOverdue && onVoiceHydroOverdue) {
+      onVoiceHydroOverdue();
     }
 
-    // Reset with next serial
+    // Reset with next serial and clear test year
     setSerialNumber(`PG-${Math.floor(1000 + Math.random() * 9000)}`);
+    setLastPressureTestYear('');
   };
 
   return (
@@ -216,6 +225,23 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
             />
           </div>
 
+          {/* Last Workshop Pressure Test Year */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+              <Clock className="h-3 w-3 text-cyan-400" />
+              Last Pressure Test
+            </label>
+            <input
+              type="number"
+              min="1990"
+              max={currentYear}
+              value={lastPressureTestYear}
+              onChange={(e) => setLastPressureTestYear(e.target.value)}
+              placeholder="Defaults to Mfg"
+              className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-1.5 font-mono text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+            />
+          </div>
+
           {/* Gauge Status */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
@@ -308,6 +334,13 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
                         <span>CONDEMNED</span>
                       </span>
                     );
+                  } else if (asset.isPressureTestOverdue) {
+                    badge = (
+                      <span className="inline-flex items-center space-x-1 rounded-full bg-rose-500/20 px-2.5 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-500/60 shadow-[0_0_10px_rgba(255,23,68,0.3)] animate-pulse">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span>HYDRO TEST OVERDUE ({currentYear - asset.hydrostaticTestDueYear}y)</span>
+                      </span>
+                    );
                   } else if (asset.serviceActionRequired === 'Hydro_Test_Workshop') {
                     badge = (
                       <span className="inline-flex items-center space-x-1 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/40">
@@ -332,7 +365,24 @@ export const RapidAssetLogger: React.FC<RapidAssetLoggerProps> = ({
                       </td>
                       <td className="py-2.5 px-3 text-slate-300 font-sans">{asset.locationTag}</td>
                       <td className="py-2.5 px-3 text-slate-300">
-                        {asset.manufactureYear} (Due: <span className="text-amber-400 font-bold">{asset.hydrostaticTestDueYear}</span>)
+                        <div className="flex items-center space-x-1.5 text-xs font-mono">
+                          <span>Mfg {asset.manufactureYear}</span>
+                          {asset.lastPressureTestYear ? (
+                            <span className="text-[10px] text-cyan-400 font-semibold">
+                              (Tested {asset.lastPressureTestYear})
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-500">
+                              (Factory Test)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] font-mono mt-0.5">
+                          Due: <span className={asset.isPressureTestOverdue ? "text-rose-400 font-bold" : "text-amber-400 font-bold"}>
+                            {asset.hydrostaticTestDueYear}
+                            {asset.isPressureTestOverdue && ` (OVERDUE by ${currentYear - asset.hydrostaticTestDueYear}y)`}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-2.5 px-3">{badge}</td>
                       <td className="py-2.5 px-3 text-right">

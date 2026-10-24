@@ -7,14 +7,13 @@
 
 export type Jurisdiction = 'ZA_SANS' | 'NZ_FENZ';
 
-// SANS 10400-A occupancy classes (J = storage, D = industrial, G1 = offices).
 export type ZAOccupancyClass =
   | 'A1' // Entertainment & public assembly
-  | 'A2' // Theatrical & indoor sport
-  | 'G1' // Offices
-  | 'J1' // High-risk storage (flammables, chemicals, tyres)
-  | 'J2' // Moderate-risk storage
-  | 'J3'; // Low-risk storage
+  | 'A2' // Theatrical & indoor entertainment
+  | 'B2' // Commercial Offices / Professional Services
+  | 'J1' // High-Hazard Industrial / Storage (Flammable, chemicals, tyre storage)
+  | 'J2' // Moderate Hazard Industrial
+  | 'J3'; // Low Hazard Industrial
 
 export type NZOccupancyClass =
   | 'NZ_HIGH'   // High Fire Hazard (Bulk flammable liquids, timber yards, chemical storage)
@@ -43,13 +42,15 @@ export interface ExtinguisherAsset {
   cylinderType: CylinderType;
   capacityKg: number; // e.g., 0.9, 1.5, 2.0, 4.5, 5.0, 9.0
   manufactureYear: number;
+  lastPressureTestYear?: number; // Year cylinder was last hydro-tested in workshop; defaults to manufactureYear if omitted
   lastServiceDate: string; // ISO date YYYY-MM-DD
   gaugePressureStatus: GaugePressureStatus;
   physicalCondition: PhysicalCondition;
   hydrostaticTestDueYear: number; // Computed: 5-year cycle for CO2, 10-year for DCP/Water/Foam
+  isPressureTestOverdue: boolean; // True if currentYear > hydrostaticTestDueYear
   condemned: boolean; // Triggered if structural damage or statutory lifespan/retest limits breached
   condemnationReason?: string;
-  serviceActionRequired: 'None' | 'Routine_Service' | 'Hydro_Test_Workshop' | 'Condemn_Replace' | 'Recharge';
+  serviceActionRequired: 'None' | 'Routine_Service' | 'Hydro_Test_Workshop' | 'PRESSURE_TEST_OVERDUE' | 'Condemn_Replace' | 'Recharge';
 }
 
 export interface HoseReelAsset {
@@ -84,11 +85,13 @@ export interface FleetAuditSummary {
   passedUnits: number;
   routineServiceRequired: number;
   hydroTestWorkshopRequired: number;
+  hydroTestOverdueCount: number; // Number of operational units operating past their statutory pressure test anniversary
   condemnedUnits: number;
   rechargeRequired: number;
   totalHoseReels: number;
   hoseReelsPassed: number;
   hoseReelsDefective: number;
+  fullComplianceClearance: boolean; // False if any condemned or pressure test overdue units exist
 }
 
 export interface CommercialQuoteItem {
