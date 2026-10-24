@@ -1,7 +1,7 @@
-import {
+import type {
   NZOccupancyClass,
   SpatialCalculationResult,
-} from '@/types/fireCompliance';
+} from '../../types/fireCompliance';
 
 /**
  * Deterministic NZS 4503:2005 Spatial Fire Compliance Engine

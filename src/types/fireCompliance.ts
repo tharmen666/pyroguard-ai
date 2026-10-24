@@ -7,13 +7,14 @@
 
 export type Jurisdiction = 'ZA_SANS' | 'NZ_FENZ';
 
+// SANS 10400-A occupancy classes (J = storage, D = industrial, G1 = offices).
 export type ZAOccupancyClass =
   | 'A1' // Entertainment & public assembly
-  | 'A2' // Theatrical & indoor entertainment
-  | 'B2' // Commercial Offices / Professional Services
-  | 'J1' // High-Hazard Industrial / Storage (Flammable, chemicals, tyre storage)
-  | 'J2' // Moderate Hazard Industrial
-  | 'J3'; // Low Hazard Industrial
+  | 'A2' // Theatrical & indoor sport
+  | 'G1' // Offices
+  | 'J1' // High-risk storage (flammables, chemicals, tyres)
+  | 'J2' // Moderate-risk storage
+  | 'J3'; // Low-risk storage
 
 export type NZOccupancyClass =
   | 'NZ_HIGH'   // High Fire Hazard (Bulk flammable liquids, timber yards, chemical storage)

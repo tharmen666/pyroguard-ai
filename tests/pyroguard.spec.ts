@@ -56,14 +56,14 @@ test.describe('PyroGuard AI - End-to-End Field Audit Suite', () => {
   });
 
   test('should render dynamic commercial quote and cryptographic dossier', async ({ page }) => {
-    // View Up-Sell Quote Matrix
-    await page.click('button:has-text("Up-Sell Quote Matrix")');
-    await expect(page.locator('text=Live Compliance Up-Sell & Condemnation Quote')).toBeVisible();
+    // View Corrective Works Quote
+    await page.click('button:has-text("Corrective Works Quote")');
+    await expect(page.locator('text=Corrective Works & Replacement Quote')).toBeVisible();
     await expect(page.locator('text=Total Inspected')).toBeVisible();
 
-    // View Legal Dossier
-    await page.click('button:has-text("Cryptographic Legal Dossier")');
-    await expect(page.locator('text=Insurer-Defensible Audit Dossier')).toBeVisible();
+    // View Audit Dossier
+    await page.click('button:has-text("Tamper-Evident Audit Dossier")');
+    await expect(page.locator('h3', { hasText: 'Tamper-Evident Audit Dossier' })).toBeVisible();
     await expect(page.locator('text=CLIENT-SIDE SHA-256 AUDIT FOOTPRINT')).toBeVisible();
     await expect(page.locator('text=Ron (SAQCC 1475 Registered)').first()).toBeVisible();
     await expect(page.locator('text=Desigan Tharmen').first()).toBeVisible();

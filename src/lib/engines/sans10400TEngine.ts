@@ -1,16 +1,21 @@
-import {
+import type {
   ZAOccupancyClass,
   SpatialCalculationResult,
-} from '@/types/fireCompliance';
+} from '../../types/fireCompliance';
 
 /**
  * Deterministic SANS 10400-T Spatial Fire Compliance Engine
- * Zero-temperature, rule-based statutory specifier.
- * References:
- *  - SANS 10400-T:2020 Clause 4.37 (Portable Fire Extinguishers)
- *  - SANS 10400-T:2020 Clause 4.36 (Hose Reels)
- *  - City of Cape Town Fire Safety By-Law (Spatial equipment density)
+ * Rule-based statutory specifier (no AI involved).
+ * References (edition and clause numbers to be confirmed):
+ *  - SANS 10400-T (portable fire extinguishers, hose reels)
+ *  - SANS 10400-A (occupancy classification)
+ *  - City of Cape Town Fire Safety By-Law (spatial equipment density)
+ *
+ * VERIFICATION: the densities and distances below are working values. They must be
+ * checked against the current SANS editions by a registered practitioner before use
+ * on paying work. Flip RULES_VERIFIED to true once that sign-off is recorded.
  */
+export const RULES_VERIFIED = false;
 
 interface ZAOcupancyMetadata {
   description: string;
@@ -21,25 +26,25 @@ interface ZAOcupancyMetadata {
 
 export const ZA_OCCUPANCY_METADATA: Record<ZAOccupancyClass, ZAOcupancyMetadata> = {
   J1: {
-    description: 'High-Hazard Industrial / Storage (Flammables, chemicals, tyres)',
+    description: 'High-risk storage (flammables, chemicals, tyres)',
     hazardLevel: 'High',
     sqmPerExtinguisher: 100,
     maxTravelDistanceM: 30,
   },
   J2: {
-    description: 'Moderate-Hazard Industrial (Manufacturing, food processing)',
+    description: 'Moderate-risk storage (general warehousing)',
     hazardLevel: 'Moderate',
     sqmPerExtinguisher: 200,
     maxTravelDistanceM: 30,
   },
   J3: {
-    description: 'Low-Hazard Industrial / Engineering',
+    description: 'Low-risk storage',
     hazardLevel: 'Low',
     sqmPerExtinguisher: 250,
     maxTravelDistanceM: 30,
   },
-  B2: {
-    description: 'Commercial Offices / Professional Consultancies',
+  G1: {
+    description: 'Offices',
     hazardLevel: 'Low',
     sqmPerExtinguisher: 200,
     maxTravelDistanceM: 30,
@@ -65,7 +70,7 @@ export function calculateSANS10400TRequirements(
   hoseReelsInstalled: number
 ): SpatialCalculationResult {
   const cleanArea = Math.max(0, Number(floorAreaM2) || 0);
-  const metadata = ZA_OCCUPANCY_METADATA[occupancyClass] || ZA_OCCUPANCY_METADATA.B2;
+  const metadata = ZA_OCCUPANCY_METADATA[occupancyClass] || ZA_OCCUPANCY_METADATA.G1;
 
   // SANS 10400-T Rule: At least 1 unit per specified sqm block, minimum 1 if area > 0
   const extinguishersRequired = cleanArea > 0 
@@ -97,7 +102,7 @@ export function calculateSANS10400TRequirements(
   }
 
   deficiencyNotes.push(
-    `Statutory Travel Envelope: Max travel distance to any extinguisher must not exceed ${metadata.maxTravelDistanceM}m under SANS 10400-T Clause 4.37.1.`
+    `Statutory Travel Envelope: Max travel distance to any extinguisher must not exceed ${metadata.maxTravelDistanceM}m under SANS 10400-T (value pending verification).`
   );
 
   const complianceClearance = extinguisherShortfall === 0 && hoseReelShortfall === 0 && cleanArea > 0;

@@ -58,7 +58,7 @@ export const CommercialQuoteCard: React.FC<CommercialQuoteCardProps> = ({
               </span>
             </div>
             <h2 className="text-lg font-black text-white tracking-wide">
-              Live Compliance Up-Sell & Condemnation Quote
+              Corrective Works & Replacement Quote
             </h2>
           </div>
         </div>
