@@ -1,0 +1,17 @@
+{
+  "name": "PyroGuard AI Standalone Field Engine",
+  "short_name": "PyroGuard AI",
+  "description": "Autonomous Fire Compliance & Asset Servicing Engine (SANS 10400-T / SANS 1475 / NZS 4503)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#00E5FF",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

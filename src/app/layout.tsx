@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "PyroGuard AI | Autonomous Multi-Agent Fire Compliance & Asset Servicing Engine",
   description: "Dual Statutory Scope: South African SANS 10400-T / SANS 1475 and New Zealand NZS 4503 / FENZ Standards. Client-side cryptographic audit manifests.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

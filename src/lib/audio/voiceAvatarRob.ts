@@ -1,11 +1,10 @@
 /**
  * ROB - Autonomous AI Fire Inspector Voice & Speech Engine
- * Multilingual & Multi-Accent Synthesis:
- *  - South African English (Warm, confident, masculine)
- *  - New Zealand English (Kiwi colloquial, FENZ certified style)
- *  - isiZulu (Sawubona, safety inspector tone)
- *  - isiXhosa (Molo, statutory compliance tone)
- *  - Afrikaans (Goeiedag, technical inspection tone)
+ * Multilingual & Multi-Accent Synthesis with Chromium Audio Fixes:
+ *  - Prevents V8 garbage collection bug
+ *  - Handles onvoiceschanged asynchronous loading
+ *  - Unpauses frozen speechSynthesis queue with resume()
+ *  - Web Audio API Tactical Comms Chime for guaranteed audible feedback
  */
 
 export type RobAccent = 'ZA_ENGLISH' | 'NZ_ENGLISH' | 'ISIZULU' | 'ISIXHOSA' | 'AFRIKAANS';
@@ -74,40 +73,135 @@ export const ROB_VOICE_SCRIPTS: VoiceLinePreset[] = [
   },
 ];
 
+// Tactical Audio Sound Chime Generator via Web Audio API
+export function playTacticalCommsChime(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    const now = ctx.currentTime;
+    
+    // Tone 1: High alert beep (880 Hz - A5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, now);
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.09);
+
+    // Tone 2: Tactical radio chirp (1320 Hz - E6)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(1320, now + 0.09);
+    gain2.gain.setValueAtTime(0.18, now + 0.09);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.09);
+    osc2.stop(now + 0.23);
+  } catch (err) {
+    console.warn('Tactical audio chime not supported:', err);
+  }
+}
+
+// Global active utterance reference to protect from Chromium V8 garbage collection
+declare global {
+  interface Window {
+    __pyroguard_active_utterance?: SpeechSynthesisUtterance | null;
+  }
+}
+
 export class RobSpeechController {
-  private static synth: SpeechSynthesis | null = typeof window !== 'undefined' ? window.speechSynthesis : null;
+  private static cachedVoices: SpeechSynthesisVoice[] = [];
   private static isSpeaking = false;
 
-  public static speak(text: string, accent: RobAccent, onStart?: () => void, onEnd?: () => void): boolean {
-    if (!this.synth || typeof window === 'undefined') {
+  private static initVoices(): void {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    
+    this.cachedVoices = window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        this.cachedVoices = window.speechSynthesis.getVoices();
+      };
+    }
+  }
+
+  public static speak(
+    text: string, 
+    accent: RobAccent, 
+    onStart?: () => void, 
+    onEnd?: () => void
+  ): boolean {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
       return false;
     }
 
     try {
-      this.synth.cancel(); // Stop any pending utterance
+      // 1. Play tactical radio chirp immediately
+      playTacticalCommsChime();
+
+      const synth = window.speechSynthesis;
+
+      // 2. Clear any frozen/stuck speech queue and resume synth
+      synth.cancel();
+      if (synth.paused) {
+        synth.resume();
+      }
+
+      // 3. Populate voices if needed
+      if (this.cachedVoices.length === 0) {
+        this.cachedVoices = synth.getVoices();
+      }
+
+      // 4. Create Utterance with high priority
       const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Determine voice match
-      const voices = this.synth.getVoices();
-      let targetVoice: SpeechSynthesisVoice | undefined;
+      window.__pyroguard_active_utterance = utterance; // Prevent garbage collection!
+
+      // Find best available voice
+      let chosenVoice: SpeechSynthesisVoice | undefined;
+      const voices = this.cachedVoices.length > 0 ? this.cachedVoices : synth.getVoices();
 
       if (accent === 'NZ_ENGLISH') {
-        targetVoice = voices.find(v => v.lang.includes('en-NZ') || v.name.includes('New Zealand') || v.lang.includes('en-AU'));
+        chosenVoice = voices.find(v => v.lang.toLowerCase().includes('en-nz') || v.name.toLowerCase().includes('new zealand') || v.lang.toLowerCase().includes('en-au'));
+        utterance.lang = 'en-NZ';
       } else if (accent === 'ZA_ENGLISH') {
-        targetVoice = voices.find(v => v.lang.includes('en-ZA') || v.name.includes('South Africa') || v.lang.includes('en-GB'));
+        chosenVoice = voices.find(v => v.lang.toLowerCase().includes('en-za') || v.name.toLowerCase().includes('south africa') || v.lang.toLowerCase().includes('en-gb'));
+        utterance.lang = 'en-ZA';
       } else if (accent === 'AFRIKAANS') {
-        targetVoice = voices.find(v => v.lang.includes('af') || v.lang.includes('nl'));
+        chosenVoice = voices.find(v => v.lang.toLowerCase().includes('af') || v.lang.toLowerCase().includes('nl'));
+        utterance.lang = 'af-ZA';
       } else if (accent === 'ISIZULU' || accent === 'ISIXHOSA') {
-        targetVoice = voices.find(v => v.lang.includes('zu') || v.lang.includes('xh') || v.lang.includes('en-ZA'));
+        chosenVoice = voices.find(v => v.lang.toLowerCase().includes('zu') || v.lang.toLowerCase().includes('xh') || v.lang.toLowerCase().includes('en-za'));
+        utterance.lang = 'en-ZA';
       }
 
-      if (targetVoice) {
-        utterance.voice = targetVoice;
+      // If specific regional voice is not locally installed on device, fall back to any high quality English voice
+      if (!chosenVoice) {
+        chosenVoice = voices.find(v => (v.name.includes('David') || v.name.includes('George') || v.name.includes('Male') || v.name.includes('Guy') || v.lang.startsWith('en')) && !v.name.includes('Zira'));
+        if (!chosenVoice && voices.length > 0) {
+          chosenVoice = voices[0];
+        }
       }
 
-      // Configure masculine, steady pitch and energetic rate
-      utterance.pitch = 0.92; // Slightly deeper, masculine tone
-      utterance.rate = 1.02; // Natural, engaging tempo
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
+      }
+
+      // Voice settings: Deep masculine pitch, clear volume, brisk tempo
+      utterance.pitch = 0.9;
+      utterance.rate = 1.0;
+      utterance.volume = 1.0; // 100% volume
 
       utterance.onstart = () => {
         this.isSpeaking = true;
@@ -116,17 +210,26 @@ export class RobSpeechController {
 
       utterance.onend = () => {
         this.isSpeaking = false;
+        window.__pyroguard_active_utterance = null;
         onEnd?.();
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (e) => {
+        console.warn('Rob voice synthesizer event:', e);
         this.isSpeaking = false;
+        window.__pyroguard_active_utterance = null;
         onEnd?.();
       };
 
-      this.synth.speak(utterance);
+      // 5. Chromium bug workaround: execute speak after short timeout to let cancel() settle
+      setTimeout(() => {
+        synth.resume();
+        synth.speak(utterance);
+      }, 50);
+
       return true;
-    } catch {
+    } catch (err) {
+      console.error('Speech synthesis error:', err);
       this.isSpeaking = false;
       onEnd?.();
       return false;
@@ -134,9 +237,10 @@ export class RobSpeechController {
   }
 
   public static stop(): void {
-    if (this.synth) {
-      this.synth.cancel();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
       this.isSpeaking = false;
+      window.__pyroguard_active_utterance = null;
     }
   }
 

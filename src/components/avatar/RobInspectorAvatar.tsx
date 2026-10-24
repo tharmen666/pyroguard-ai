@@ -11,12 +11,15 @@ import {
   AlertCircle,
   Radio,
   Flame,
-  UserCheck
+  UserCheck,
+  PlayCircle,
+  Headphones
 } from 'lucide-react';
 import { 
   RobAccent, 
   RobSpeechController, 
-  ROB_VOICE_SCRIPTS 
+  ROB_VOICE_SCRIPTS,
+  playTacticalCommsChime
 } from '@/lib/audio/voiceAvatarRob';
 
 interface RobInspectorAvatarProps {
@@ -32,6 +35,7 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeSpeechText, setActiveSpeechText] = useState<string>('');
   const [audioBarHeights, setAudioBarHeights] = useState<number[]>([40, 60, 80, 50, 70, 90, 60, 40]);
+  const [hasTestedAudio, setHasTestedAudio] = useState<boolean>(false);
 
   // Audio equalizer animation when Rob speaks
   useEffect(() => {
@@ -41,7 +45,7 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
         setAudioBarHeights(
           Array.from({ length: 8 }, () => Math.floor(Math.random() * 75) + 25)
         );
-      }, 100);
+      }, 90);
     } else {
       setAudioBarHeights([20, 25, 20, 30, 20, 25, 20, 20]);
     }
@@ -49,12 +53,28 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
   }, [isSpeaking]);
 
   const handleSpeakPreset = (scriptId: string) => {
+    setHasTestedAudio(true);
     const preset = ROB_VOICE_SCRIPTS.find(s => s.id === scriptId) || ROB_VOICE_SCRIPTS[0];
     const textToSpeak = preset.text[currentAccent];
     setActiveSpeechText(textToSpeak);
 
     RobSpeechController.speak(
       textToSpeak,
+      currentAccent,
+      () => setIsSpeaking(true),
+      () => setIsSpeaking(false)
+    );
+  };
+
+  const handleQuickAudioTest = () => {
+    setHasTestedAudio(true);
+    playTacticalCommsChime();
+    const testText = currentAccent === 'NZ_ENGLISH'
+      ? "Kia ora! Audio system online. Rob is ready to inspect."
+      : "Howzit! Audio system verified. Rob is operational.";
+    setActiveSpeechText(testText);
+    RobSpeechController.speak(
+      testText,
       currentAccent,
       () => setIsSpeaking(true),
       () => setIsSpeaking(false)
@@ -75,7 +95,7 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-cyan-400/60 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-4 shadow-[0_0_30px_rgba(0,229,255,0.25)]">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-cyan-400/60 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-4 shadow-[0_0_30px_rgba(0,229,255,0.25)] space-y-3">
       
       {/* Background Cyber Circuit Glow */}
       <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-cyan-500/10 blur-2xl pointer-events-none" />
@@ -134,7 +154,7 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
                 />
               ))}
               <span className="text-[10px] font-mono text-cyan-400/80 ml-2">
-                {isSpeaking ? 'TRANSMITTING VOICE...' : 'STANDBY READY'}
+                {isSpeaking ? 'TRANSMITTING AUDIO VOICE...' : 'SPEECH STANDBY (TAP TO TEST)'}
               </span>
             </div>
           </div>
@@ -148,7 +168,10 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
             <Languages className="h-4 w-4 text-cyan-400 ml-1.5 shrink-0" />
             <select
               value={currentAccent}
-              onChange={(e) => onAccentChange(e.target.value as RobAccent)}
+              onChange={(e) => {
+                const newAccent = e.target.value as RobAccent;
+                onAccentChange(newAccent);
+              }}
               className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer pr-2"
             >
               {accents.map((acc) => (
@@ -161,6 +184,17 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
 
           {/* Quick Voice Play Trigger Buttons */}
           <div className="flex items-center space-x-1.5">
+            
+            {/* Audio Check / Unlock Button */}
+            <button
+              onClick={handleQuickAudioTest}
+              className="flex items-center justify-center space-x-1 rounded-xl bg-slate-800 border border-cyan-400/50 px-2.5 py-2 text-xs font-bold text-cyan-300 hover:bg-slate-700 transition shadow-[0_0_10px_rgba(0,229,255,0.2)]"
+              title="Click to test speaker / unlock browser audio"
+            >
+              <Headphones className="h-3.5 w-3.5 text-cyan-400" />
+              <span>TEST VOICE</span>
+            </button>
+
             <button
               onClick={() => handleSpeakPreset('welcome')}
               className="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-2 text-xs font-black text-slate-950 hover:brightness-110 shadow-[0_0_15px_rgba(0,229,255,0.4)] transition"
@@ -204,9 +238,10 @@ export const RobInspectorAvatar: React.FC<RobInspectorAvatarProps> = ({
 
       {/* Subtitles / Active Utterance Banner */}
       {activeSpeechText && (
-        <div className="mt-3 rounded-lg border border-cyan-500/30 bg-slate-950/90 px-3.5 py-2 font-mono text-xs text-cyan-200 flex items-start space-x-2">
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/90 px-3.5 py-2 font-mono text-xs text-cyan-200 flex items-start space-x-2">
           <Radio className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5 animate-pulse" />
-          <p className="flex-1 leading-relaxed italic">
+          <p className="flex-1 leading-relaxed">
+            <span className="text-cyan-400 font-bold uppercase mr-1.5">[ROB TRANSMISSION]:</span>
             &ldquo;{activeSpeechText}&rdquo;
           </p>
         </div>
