@@ -1,10 +1,10 @@
-import {
+import type {
   ExtinguisherAsset,
   FleetAuditSummary,
   CommercialQuoteItem,
   Jurisdiction,
   HoseReelAsset,
-} from '@/types/fireCompliance';
+} from '../../types/fireCompliance';
 
 /**
  * Deterministic SANS 1475 Asset Lifecycle & Condemnation Engine
@@ -48,7 +48,7 @@ export function evaluateExtinguisherCompliance(
   let condemnationReason: string | undefined = undefined;
   let serviceActionRequired: ExtinguisherAsset['serviceActionRequired'] = 'None';
 
-  // 1. Mandatory Condemnation Checks under SANS 1475-1 Clause 6
+  // 1. Mandatory condemnation checks under SANS 1475-1 (clause reference to verify)
   if (asset.physicalCondition === 'DentedCorroded') {
     condemned = true;
     condemnationReason = 'SANS 1475 Condemned: Structural shell denting/corrosion compromises pressure vessel integrity.';

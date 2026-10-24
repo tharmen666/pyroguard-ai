@@ -20,7 +20,7 @@ import {
   ZAOccupancyClass,
   NZOccupancyClass
 } from '@/types/fireCompliance';
-import { ZA_OCCUPANCY_METADATA } from '@/lib/engines/sans10400TEngine';
+import { RULES_VERIFIED, ZA_OCCUPANCY_METADATA } from '@/lib/engines/sans10400TEngine';
 import { NZ_OCCUPANCY_METADATA } from '@/lib/engines/nzs4503Engine';
 
 interface SpatialCalculatorProps {
@@ -53,10 +53,10 @@ export const SpatialCalculator: React.FC<SpatialCalculatorProps> = ({
   const isZA = jurisdiction === 'ZA_SANS';
 
   const zaOptions: { value: ZAOccupancyClass; label: string; desc: string }[] = [
-    { value: 'J1', label: 'J1 - High-Hazard Industrial / Storage', desc: '1 unit per 100m²' },
-    { value: 'J2', label: 'J2 - Moderate-Hazard Industrial', desc: '1 unit per 200m²' },
-    { value: 'J3', label: 'J3 - Low-Hazard Industrial', desc: '1 unit per 250m²' },
-    { value: 'B2', label: 'B2 - Commercial Offices / Consultancies', desc: '1 unit per 200m²' },
+    { value: 'J1', label: 'J1 - High-Risk Storage', desc: '1 unit per 100m²' },
+    { value: 'J2', label: 'J2 - Moderate-Risk Storage', desc: '1 unit per 200m²' },
+    { value: 'J3', label: 'J3 - Low-Risk Storage', desc: '1 unit per 250m²' },
+    { value: 'G1', label: 'G1 - Offices', desc: '1 unit per 200m²' },
     { value: 'A1', label: 'A1 - Entertainment & Public Gathering (>50)', desc: '1 unit per 100m²' },
     { value: 'A2', label: 'A2 - Theatrical & Indoor Venues', desc: '1 unit per 100m²' },
   ];
@@ -239,7 +239,7 @@ export const SpatialCalculator: React.FC<SpatialCalculatorProps> = ({
                 <Sparkles className="h-3.5 w-3.5" />
                 Deterministic Output Matrix
               </span>
-              <span className="text-[10px] font-mono text-slate-400">ZERO TEMPERATURE</span>
+              <span className="text-[10px] font-mono text-slate-400">RULE-BASED · NO AI</span>
             </div>
 
             {/* Metrics Grid */}
@@ -264,7 +264,7 @@ export const SpatialCalculator: React.FC<SpatialCalculatorProps> = ({
                 <div className={`text-xl font-mono font-black mt-0.5 ${
                   calculationResult.extinguisherShortfall > 0 ? 'text-rose-400' : 'text-emerald-400'
                 }`}>
-                  {calculationResult.extinguisherShortfall > 0 ? `-${calculationResult.extinguisherShortfall}` : 'CLEARED'}
+                  {calculationResult.extinguisherShortfall > 0 ? `${calculationResult.extinguisherShortfall} short` : 'CLEARED'}
                 </div>
                 <div className="text-[9px] text-slate-400 font-mono mt-0.5">
                   {calculationResult.extinguishersInstalled} installed
@@ -281,7 +281,7 @@ export const SpatialCalculator: React.FC<SpatialCalculatorProps> = ({
                   {calculationResult.hoseReelsRequired}
                 </div>
                 <div className="text-[9px] font-mono text-slate-400 mt-0.5">
-                  {calculationResult.hoseReelShortfall > 0 ? `Shortfall: -${calculationResult.hoseReelShortfall}` : 'Coverage OK'}
+                  {calculationResult.hoseReelShortfall > 0 ? `${calculationResult.hoseReelShortfall} short` : 'Coverage OK'}
                 </div>
               </div>
 
@@ -307,6 +307,12 @@ export const SpatialCalculator: React.FC<SpatialCalculatorProps> = ({
                   {calculationResult.hoseReelCoverageRadiusM}m total radius (30m hose + 5m stream)
                 </span>
               </div>
+              {!RULES_VERIFIED && (
+                <div className="flex items-start gap-1.5 pt-1 text-[10px] text-amber-300/90">
+                  <Info className="h-3.5 w-3.5 shrink-0" />
+                  <span>Density and distance values pending verification against current SANS editions by a registered practitioner.</span>
+                </div>
+              )}
             </div>
           </div>
 

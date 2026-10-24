@@ -55,9 +55,10 @@ export default function PyroGuardApp() {
   const [robAccent, setRobAccent] = useState<RobAccent>('ZA_ENGLISH');
 
   // Facility Metadata
-  const [facilityName, setFacilityName] = useState<string>('Astron Vrededorp Logistics & Forecourt Hub');
-  const [facilityAddress, setFacilityAddress] = useState<string>('24 Jan Smuts Ave, Johannesburg, 2092');
-  const [gpsCoordinates, setGpsCoordinates] = useState<string>('26.1929° S, 28.0185° E');
+  // Fictional demo facility — never use a real company, brand or street address here.
+  const [facilityName, setFacilityName] = useState<string>('Demo Site: Harbourline Logistics & Forecourt Hub');
+  const [facilityAddress, setFacilityAddress] = useState<string>('Unit 4, Example Industrial Park, Montague Gardens, Cape Town');
+  const [gpsCoordinates, setGpsCoordinates] = useState<string>('33.86° S, 18.52° E');
   const [clientRepresentative, setClientRepresentative] = useState<string>('M. Khumalo (Regional Ops)');
 
   // Spatial State
@@ -218,14 +219,15 @@ export default function PyroGuardApp() {
   // Complete Audit Manifest Dossier
   const auditManifest: AuditManifestDossier = useMemo(() => {
     return {
-      auditId: 'PG-AUDIT-2026-10-24-8821',
+      auditId: 'PG-DEMO-AUDIT-0001',
       facilityName,
       facilityAddress,
       gpsCoordinates,
       clientRepresentative,
       leadAuditor: {
         name: 'Ron (SAQCC 1475 Registered)',
-        registrationNumber: jurisdiction === 'ZA_SANS' ? 'SAQCC-1475-REG-8821' : 'IQP-NZ-FENZ-4503-A',
+        // Placeholder numbers: a real registration number must never appear in a public demo.
+        registrationNumber: jurisdiction === 'ZA_SANS' ? 'SAQCC-DEMO-0001' : 'NZ-IQP-DEMO-0001',
         organization: 'PyroGuard Compliance Network',
       },
       technicalArchitect: {
@@ -242,10 +244,22 @@ export default function PyroGuardApp() {
       grandTotal: commercialQuote.grandTotal,
       currency: commercialQuote.currency,
       clientSha256Signature: '',
+      // The declaration must follow the actual results: never claim compliance while
+      // there is a shortfall or a unit still needs work.
       regulatoryDeclarations: [
-        jurisdiction === 'ZA_SANS' 
-          ? 'Compliant with SANS 10400-T (Clause 4.37), SANS 1475 Parts 1 & 2, and City of Cape Town Fire Safety By-Laws.'
-          : 'Compliant with NZS 4503:2005 Hand Operated Fire-Fighting Equipment & FENZ Building Warrant of Fitness standard.',
+        `${
+          jurisdiction === 'ZA_SANS'
+            ? 'Assessed against SANS 10400-T, SANS 1475 Parts 1 & 2 and City of Cape Town Fire Safety By-Laws'
+            : 'Assessed against NZS 4503:2005 and FENZ Building Warrant of Fitness requirements'
+        }: ${
+          spatialCalculation.complianceClearance &&
+          fleetSummary.condemnedUnits === 0 &&
+          fleetSummary.rechargeRequired === 0 &&
+          fleetSummary.hydroTestWorkshopRequired === 0 &&
+          fleetSummary.hoseReelsDefective === 0
+            ? 'no deficiencies recorded.'
+            : 'deficiencies recorded; see the corrective works quote.'
+        } Subject to review and sign-off by the registered technician.`,
       ],
     };
   }, [
@@ -296,7 +310,7 @@ export default function PyroGuardApp() {
                 </div>
                 <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
                   <UserCheck className="h-3 w-3 text-emerald-400" />
-                  <span>Ron (SAQCC #8821)</span>
+                  <span>Ron (SAQCC Fire)</span>
                   <span className="text-slate-600">•</span>
                   <span>Desigan (AI Arch)</span>
                 </div>
@@ -413,7 +427,7 @@ export default function PyroGuardApp() {
             }`}
           >
             <BadgeDollarSign className="h-4 w-4" />
-            <span>Up-Sell Quote Matrix</span>
+            <span>Corrective Works Quote</span>
           </button>
 
           <button
@@ -425,7 +439,7 @@ export default function PyroGuardApp() {
             }`}
           >
             <FileCheck className="h-4 w-4" />
-            <span>Cryptographic Legal Dossier</span>
+            <span>Tamper-Evident Audit Dossier</span>
           </button>
 
         </div>
@@ -478,7 +492,7 @@ export default function PyroGuardApp() {
                   RobSpeechController.speak(
                     spatialCalculation.complianceClearance
                       ? "Spatial clearance verified under SANS 10400-T! All travel envelopes and hose reel parameters are satisfied."
-                      : `Spatial shortfall detected! Deficit of ${spatialCalculation.extinguisherShortfall} extinguishers to maintain legal compliance.`,
+                      : `Spatial shortfall detected! ${spatialCalculation.extinguisherShortfall} extinguishers short of the required density.`,
                     robAccent
                   );
                 }}
@@ -496,7 +510,7 @@ export default function PyroGuardApp() {
                 onLoadPresetFleet={loadPresetFleet}
                 onVoiceCondemned={() => {
                   RobSpeechController.speak(
-                    "Warning! Cylinder condemned under SANS 1475 Clause 6. Added to replacement quote.",
+                    "Warning! Cylinder condemned under SANS 1475. Added to replacement quote.",
                     robAccent
                   );
                 }}
@@ -525,7 +539,7 @@ export default function PyroGuardApp() {
                 manifest={auditManifest}
                 onVoiceSignOff={() => {
                   RobSpeechController.speak(
-                    "Audit manifest finalized. Web Crypto SHA-256 seal embedded. Legal dossier is ready for Ron's SAQCC review.",
+                    "Audit manifest finalized. Web Crypto SHA-256 seal embedded. Audit dossier is ready for Ron's SAQCC review.",
                     robAccent
                   );
                 }}

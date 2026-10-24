@@ -74,9 +74,9 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
             <FileCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-black text-white">Insurer-Defensible Audit Dossier</h3>
+            <h3 className="text-base font-black text-white">Tamper-Evident Audit Dossier</h3>
             <p className="text-xs text-slate-300 font-mono">
-              Web Crypto SHA-256 Tamper-Evident Manifest • Official Certificate
+              Web Crypto SHA-256 Tamper-Evident Manifest • Technician sign-off required
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
             className="flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-slate-950 hover:brightness-110 shadow-[0_0_20px_rgba(0,229,255,0.5)] transition"
           >
             <Printer className="h-4 w-4" />
-            <span>Print / Save Legal PDF</span>
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </div>
@@ -116,13 +116,13 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
                   PYROGUARD AI
                 </h1>
                 <span className="rounded bg-slate-950 text-white px-2 py-0.5 text-[10px] font-mono font-bold tracking-widest uppercase">
-                  LEGAL DOSSIER
+                  AUDIT DOSSIER
                 </span>
               </div>
               <p className="text-xs font-semibold text-slate-700 tracking-wide uppercase">
                 {isZA 
-                  ? 'Statutory Compliance Declaration • SANS 10400-T & SANS 1475 (Parts 1 & 2)' 
-                  : 'Statutory Compliance Declaration • NZS 4503:2005 & FENZ Brigade Regulations'}
+                  ? 'Compliance Assessment • SANS 10400-T & SANS 1475 (Parts 1 & 2)' 
+                  : 'Compliance Assessment • NZS 4503:2005 & FENZ Brigade Regulations'}
               </p>
               <p className="text-[11px] text-slate-600">
                 City of Cape Town Fire Safety By-Laws & National Building Regulations Act 103 of 1977
@@ -271,7 +271,7 @@ export const DossierPreview: React.FC<DossierPreviewProps> = ({
           <div className="space-y-2">
             <div className="font-bold text-slate-500 text-[10px] uppercase">1. Lead Competent Auditor</div>
             <div className="h-10 border-b border-dashed border-slate-400 flex items-end pb-1 font-serif italic text-base text-slate-900">
-              Ron • SAQCC 1475/8821
+              Ron • SAQCC Fire (demo reg.)
             </div>
             <div className="font-bold text-slate-900">{manifest.leadAuditor.name}</div>
             <div className="text-[10px] text-slate-600 font-mono">SAQCC Registered Competent Person</div>

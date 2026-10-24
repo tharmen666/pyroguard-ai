@@ -53,18 +53,18 @@ export const ROB_VOICE_SCRIPTS: VoiceLinePreset[] = [
     id: 'condemned_alert',
     category: 'condemned_alert',
     text: {
-      ZA_ENGLISH: "Statutory condemnation alert! This cylinder shows severe structural defect or age breach. Condemned under SANS 1475 Clause 6. Added to replacement quote.",
+      ZA_ENGLISH: "Statutory condemnation alert! This cylinder shows severe structural defect or age breach. Condemned under SANS 1475. Added to replacement quote.",
       NZ_ENGLISH: "Condemned cylinder alert! NZS 4503 safety threshold breached. Unit cannot be recertified and must be replaced immediately.",
       ISIZULU: "Isixwayiso! Lesi sicishamlilo silimele kakhulu ngokwe-SANS 1475. Kumele silahlwe bese kufakwa esisha.",
       ISIXHOSA: "Isilumkiso esikhulu! Lo mqulu unomonakalo omkhulu ngokomthetho we-SANS 1475. Kufuneka utshatyalaliswe kwaye kufakwe omtsha.",
-      AFRIKAANS: "Kritieke waarskuwing! Hierdie silinder is gekondemneer kragtens SANS 1475 Klousule 6. Dit moet onmiddellik vervang word.",
+      AFRIKAANS: "Kritieke waarskuwing! Hierdie silinder is gekondemneer kragtens SANS 1475. Dit moet onmiddellik vervang word.",
     },
   },
   {
     id: 'sign_off',
     category: 'sign_off',
     text: {
-      ZA_ENGLISH: "Audit complete. Cryptographic SHA-256 seal embedded. Dossier is insurer-defensible and signed off for Ron's SAQCC review.",
+      ZA_ENGLISH: "Audit complete. Cryptographic SHA-256 seal embedded. Dossier is sealed and ready for Ron's SAQCC review.",
       NZ_ENGLISH: "Audit finalized sweet as! Tamper-evident cryptographic seal stamped. Ready for BWoF and FENZ records.",
       ISIZULU: "Ukuhlolwa kuphothuliwe. Isitembu se-SHA-256 sifakiwe. Ifayela lilungele ukusayinwa.",
       ISIXHOSA: "Uhlolo lugqityiwe. Ityala livalwe nge-SHA-256. Ifayile ilungile kwi-inshurensi.",

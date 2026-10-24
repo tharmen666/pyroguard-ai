@@ -35,7 +35,7 @@ export const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ isOpen, onClose,
   const chapters = [
     { title: 'LiDAR Spatial Floor Scan', standard: 'SANS 10400-T', duration: 25, icon: Compass },
     { title: '15-Sec Cylinder Diagnostic', standard: 'SANS 1475-1', duration: 50, icon: Scan },
-    { title: 'Instant Condemnation & Upsell', standard: 'Commercial Engine', duration: 75, icon: AlertTriangle },
+    { title: 'Instant Condemnation & Quote', standard: 'Commercial Engine', duration: 75, icon: AlertTriangle },
     { title: 'SHA-256 Cryptographic Dossier', standard: 'Web Crypto API', duration: 100, icon: ShieldCheck },
   ];
 
@@ -159,14 +159,14 @@ export const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ isOpen, onClose,
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-mono font-bold text-rose-400 uppercase tracking-widest">CHAPTER 03 / 04</span>
-                <h4 className="text-xl sm:text-2xl font-black text-white">Instant Condemnation & Up-Sell</h4>
+                <h4 className="text-xl sm:text-2xl font-black text-white">Instant Condemnation & Quote</h4>
                 <p className="text-xs sm:text-sm text-slate-300">
                   Zero delays. Corroded shells or expired cylinders trigger automated statutory condemnation and instant commercial quote generation.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center">
                 <span className="rounded bg-rose-900/60 px-3 py-1 font-mono text-xs text-rose-200 border border-rose-500">
-                  Condemned: SANS 1475 Clause 6
+                  Condemned: SANS 1475
                 </span>
                 <span className="rounded bg-emerald-900/60 px-3 py-1 font-mono text-xs text-emerald-200 border border-emerald-500">
                   Quote Generated: R 4,825.00
@@ -185,7 +185,7 @@ export const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ isOpen, onClose,
                 <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">CHAPTER 04 / 04</span>
                 <h4 className="text-xl sm:text-2xl font-black text-white">Cryptographic SHA-256 Dossier</h4>
                 <p className="text-xs sm:text-sm text-slate-300">
-                  Client-side Web Crypto API seals the manifest. Insurers and fire marshals receive an untampered, legal compliance dossier.
+                  Client-side Web Crypto API seals the manifest. Insurers and fire marshals receive a tamper-evident compliance dossier.
                 </p>
               </div>
               <div className="font-mono text-xs text-emerald-400 bg-slate-900/90 px-4 py-1.5 rounded-lg border border-emerald-500/50">

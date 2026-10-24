@@ -1,83 +1,104 @@
 /**
  * PYROGUARD AI - DETERMINISTIC STATUTORY ENGINE SMOKE TESTS
- * Verifies pure mathematical outputs against statutory SANS & NZS regulatory tables.
+ * Imports the real engines (Node runs the .ts files directly) so a change to any
+ * rule value or formula is caught here. Never re-implement engine maths in this file.
+ *
+ * The expected values encode the CURRENT working rules, which are still pending
+ * verification against the SANS / NZS standards (see RULES_VERIFIED).
  */
 
 import assert from 'node:assert';
+import { calculateSANS10400TRequirements, RULES_VERIFIED } from '../src/lib/engines/sans10400TEngine.ts';
+import { calculateNZS4503Requirements } from '../src/lib/engines/nzs4503Engine.ts';
+import {
+  calculateHydrostaticTestDueYear,
+  evaluateExtinguisherCompliance,
+  generateDynamicCommercialQuote,
+  summarizeFleet,
+} from '../src/lib/engines/sans1475Engine.ts';
 
 console.log('🔥 Running PyroGuard AI Deterministic Smoke Tests...\n');
 
-// 1. SANS 10400-T Spatial Specifier Verification
+// 1. SANS 10400-T Spatial Specifier
 function testSANS10400T() {
-  console.log('--- TEST 1: SANS 10400-T Spatial Density Verification ---');
-  
-  const J1_sqmPerExt = 100;
-  const B2_sqmPerExt = 200;
-  const J3_sqmPerExt = 250;
-  const area = 1000;
+  console.log('--- TEST 1: SANS 10400-T Spatial Density ---');
 
-  const j1Required = Math.ceil(area / J1_sqmPerExt);
-  const b2Required = Math.ceil(area / B2_sqmPerExt);
-  const j3Required = Math.ceil(area / J3_sqmPerExt);
-  const hoseReelsRequired = Math.ceil(area / 500);
+  assert.strictEqual(calculateSANS10400TRequirements(1000, 'J1', 0, 0).extinguishersRequired, 10, 'J1 high-risk storage: 10 units for 1000m²');
+  assert.strictEqual(calculateSANS10400TRequirements(1000, 'G1', 0, 0).extinguishersRequired, 5, 'G1 offices: 5 units for 1000m²');
+  assert.strictEqual(calculateSANS10400TRequirements(1000, 'J3', 0, 0).extinguishersRequired, 4, 'J3 low-risk storage: 4 units for 1000m²');
 
-  assert.strictEqual(j1Required, 10, 'J1 High-Hazard must yield 10 extinguishers for 1000m²');
-  assert.strictEqual(b2Required, 5, 'B2 Offices must yield 5 extinguishers for 1000m²');
-  assert.strictEqual(j3Required, 4, 'J3 Low-Hazard must yield 4 extinguishers for 1000m²');
-  assert.strictEqual(hoseReelsRequired, 2, '1000m² must yield 2 hose reels (1 per 500m²)');
+  const r = calculateSANS10400TRequirements(1000, 'G1', 3, 1);
+  assert.strictEqual(r.hoseReelsRequired, 2, '1000m² needs 2 hose reels (1 per 500m²)');
+  assert.strictEqual(r.extinguisherShortfall, 2);
+  assert.strictEqual(r.hoseReelShortfall, 1);
+  assert.strictEqual(r.complianceClearance, false, 'A shortfall must never clear compliance');
 
-  console.log('✅ SANS 10400-T spatial allocation rates PASSED');
+  const ok = calculateSANS10400TRequirements(1000, 'G1', 5, 2);
+  assert.strictEqual(ok.complianceClearance, true);
+  assert.strictEqual(calculateSANS10400TRequirements(200, 'G1', 1, 0).hoseReelsRequired, 0, 'No hose reel at or below 250m²');
+  assert.strictEqual(calculateSANS10400TRequirements(0, 'G1', 0, 0).complianceClearance, false, 'Zero area cannot be cleared');
+
+  console.log(`✅ SANS 10400-T PASSED (rules verified by practitioner: ${RULES_VERIFIED})`);
 }
 
-// 2. NZS 4503 New Zealand Hazard Verification
+// 2. NZS 4503
 function testNZS4503() {
-  console.log('--- TEST 2: NZS 4503 New Zealand Hazard Verification ---');
-  
-  const area = 1500;
-  const nzHighReq = Math.ceil(area / 100);
-  const nzMedReq = Math.ceil(area / 150);
-  const nzLowReq = Math.ceil(area / 250);
+  console.log('--- TEST 2: NZS 4503 Hazard Density ---');
 
-  assert.strictEqual(nzHighReq, 15, 'NZ High Hazard must require 15 units for 1500m²');
-  assert.strictEqual(nzMedReq, 10, 'NZ Medium Hazard must require 10 units for 1500m²');
-  assert.strictEqual(nzLowReq, 6, 'NZ Low Hazard must require 6 units for 1500m²');
+  assert.strictEqual(calculateNZS4503Requirements(1500, 'NZ_HIGH', 0, 0).extinguishersRequired, 15);
+  assert.strictEqual(calculateNZS4503Requirements(1500, 'NZ_MEDIUM', 0, 0).extinguishersRequired, 10);
+  assert.strictEqual(calculateNZS4503Requirements(1500, 'NZ_LOW', 0, 0).extinguishersRequired, 6);
 
-  console.log('✅ NZS 4503 spatial allocation rates PASSED');
+  console.log('✅ NZS 4503 PASSED');
 }
 
-// 3. SANS 1475 Cylinder Intervals & Condemnation
-function calculateHydroDue(type, mfg, current) {
-  const cycle = type === 'CO2' ? 5 : 10;
-  const elapsed = Math.max(0, current - mfg);
-  if (elapsed === 0) return mfg + cycle;
-  if (elapsed % cycle === 0) return mfg + elapsed;
-  return mfg + Math.ceil(elapsed / cycle) * cycle;
-}
-
+// 3. SANS 1475 cylinder lifecycle, condemnation and quote
 function testSANS1475Lifecycle() {
-  console.log('--- TEST 3: SANS 1475 Cylinder Intervals & Condemnation ---');
-  
-  const currentYear = 2026;
-  
-  // CO2: 5-year cycle strictly
-  const co2Mfg = 2021;
-  const co2DueYear = calculateHydroDue('CO2', co2Mfg, currentYear);
-  assert.strictEqual(co2DueYear, 2026, 'CO2 manufactured in 2021 must be due for hydro test in 2026');
+  console.log('--- TEST 3: SANS 1475 Lifecycle & Condemnation ---');
 
-  // DCP: 10-year cycle
-  const dcpMfg = 2018;
-  const dcpDueYear = calculateHydroDue('DCP', dcpMfg, currentYear);
-  assert.strictEqual(dcpDueYear, 2028, 'DCP manufactured in 2018 must be due for hydro test in 2028');
+  assert.strictEqual(calculateHydrostaticTestDueYear('CO2', 2021, 2026), 2026, 'CO2 made 2021 is due 2026');
+  assert.strictEqual(calculateHydrostaticTestDueYear('DCP', 2018, 2026), 2028, 'DCP made 2018 is due 2028');
 
-  // Condemnation checks
-  const rustedCondemned = true; // SANS 1475 Clause 6
-  assert.strictEqual(rustedCondemned, true, 'Severe rust must trigger statutory condemnation');
+  const base = {
+    id: 't1',
+    serialNumber: 'TEST-1',
+    locationTag: 'Test bay',
+    cylinderType: 'DCP',
+    capacityKg: 4.5,
+    manufactureYear: 2022,
+    lastServiceDate: new Date().toISOString().slice(0, 10),
+    gaugePressureStatus: 'Normal',
+    physicalCondition: 'Pass',
+  };
 
-  console.log('✅ SANS 1475 lifecycle and condemnation criteria PASSED');
+  const rusted = evaluateExtinguisherCompliance({ ...base, physicalCondition: 'Rusted' }, 2026);
+  assert.strictEqual(rusted.condemned, true, 'Rust must condemn');
+  assert.strictEqual(rusted.serviceActionRequired, 'Condemn_Replace');
+
+  const old = evaluateExtinguisherCompliance({ ...base, manufactureYear: 2004 }, 2026);
+  assert.strictEqual(old.condemned, true, 'A DCP cylinder over 20 years must condemn');
+
+  const low = evaluateExtinguisherCompliance({ ...base, gaugePressureStatus: 'Undercharged' }, 2026);
+  assert.strictEqual(low.serviceActionRequired, 'Recharge');
+
+  const good = evaluateExtinguisherCompliance(base, 2026);
+  assert.strictEqual(good.condemned, false);
+  assert.strictEqual(good.serviceActionRequired, 'None');
+
+  const summary = summarizeFleet([rusted, good], []);
+  assert.strictEqual(summary.condemnedUnits, 1);
+
+  const quote = generateDynamicCommercialQuote('ZA_SANS', summary, 2, 0);
+  assert.ok(quote.items.length > 0, 'Quote must have line items');
+  assert.strictEqual(quote.currency, 'ZAR');
+  const lineTotal = quote.items.reduce((s, i) => s + i.totalPrice, 0);
+  assert.ok(quote.grandTotal >= lineTotal, 'Grand total must cover the line items');
+
+  console.log('✅ SANS 1475 lifecycle, condemnation and quote PASSED');
 }
 
 testSANS10400T();
 testNZS4503();
 testSANS1475Lifecycle();
 
-console.log('\n🚀 ALL STATUTORY COMPLIANCE SMOKE TESTS PASSED (100% Deterministic)\n');
+console.log('\n🚀 ALL STATUTORY ENGINE SMOKE TESTS PASSED (real engines)\n');
